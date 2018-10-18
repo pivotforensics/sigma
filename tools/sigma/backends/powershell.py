@@ -27,7 +27,7 @@ class PowerShellBackend(SingleTextQueryBackend):
         ("csv", False, "Return the results in CSV format instead of Powershell objects", None),
     )
 
-    reEscape = re.compile('("|\\\\(?![*?])|\+)')
+    #reEscape = re.compile('("|\\\\(?![*?])|\+)')
     reClear = None
     andToken = " -and "
     orToken = " -or "
@@ -40,7 +40,6 @@ class PowerShellBackend(SingleTextQueryBackend):
     notNullExpression = "%s=\"*\""
     mapExpression = "$_.%s -eq %s"
     mapListsSpecialHandling = True
-    escapeChar = "`"
 
     logname = None
     eventids = []
@@ -126,10 +125,10 @@ class PowerShellBackend(SingleTextQueryBackend):
             else:
                 # General handling here...
                 if type(value) == str and "*" in value:
-                    value = normalize_value(value)
+                    value = normalize_value(value, keypresent=True)
                     return "$_.message -match %s" % (self.generateValueNode(key + ".*" + value, True))
                 elif type(value) in (str, int):
-                    value = normalize_value(value)
+                    value = normalize_value(value, keypresent=True)
                     return '$_.message -match %s' % (self.generateValueNode(key + ".*" + value, True))
                 else:
                     return self.mapExpression % (key, self.generateNode(value))
@@ -149,7 +148,7 @@ class PowerShellBackend(SingleTextQueryBackend):
             else:
                 # General list handling here...
                 if type(item) == 'str' and "*" in item:
-                    item = normalize_value(item)
+                    item = normalize_value(item, keypresent=True)
                     itemslist.append('$_.message -match %s' % (self.generateValueNode(key + ".*" + item, True)))
                 else:
                     item = normalize_value(item)
@@ -201,16 +200,17 @@ class PowerShellBackend(SingleTextQueryBackend):
                 return " | select %s, %s | group %s | foreach { [PSCustomObject]@{'%s'=$_.name;'Count'=($_.group.%s | sort -u).count} }  | sort count -desc | where { $_.count %s %s }" % (agg.groupfield, agg.aggfield, agg.groupfield, agg.groupfield, agg.aggfield, powershell_cond_op, agg.condition)
 
 
-def normalize_value(value):
+def normalize_value(value, keypresent=False):
     """Normalize the value so it will process through Powershell appropriately"""
     value = str(value)
 
-    if value[0] == '*':
-        value = value[1:]
-    value = value.replace("*", ".*")    
-    value = value.replace('"', '`"')
+    if keypresent:
+        if value[0] == '*':
+            value = value[1:]
+    value = value.replace("*", ".*")
     value = value.replace('\\', '\\\\')
     value = value.replace('(', '\\(')
     value = value.replace(')', '\\)')
+    value = value.replace('"', '`"')
 
     return value
