@@ -51,7 +51,11 @@ class PowerShellBackend(SingleTextQueryBackend):
 
             result = self.generateBefore(parsed, query)
             if not query:
-                result += " | select TimeCreated,Id,RecordId,ProcessId,MachineName,Message"
+                if parsed.parsedAgg:
+                    powershellSuffixAgg = self.generateAggregation(parsed.parsedAgg)
+                    result += powershellSuffixAgg
+                else:
+                    result += " | select TimeCreated,Id,RecordId,ProcessId,MachineName,Message"
             else:
                 result += query
             result += self.generateAfter(parsed)
@@ -60,18 +64,26 @@ class PowerShellBackend(SingleTextQueryBackend):
 
     def generateBefore(self, parsed, query):
         # If we have a query (aka we have more than just a log source and event IDs), process differently
+        # NOTE: The $logs check prepended to some of the commands are due to situations where on Win8.1+ there
+        # are often more than 256+ event log files and PS throws "The data is invalid" errors.  This is not a
+        # perfect solution, but it works for now by only processing files with records in them (typically not more
+        # than 100-150 log files)
         if query:
             if self.logname and self.eventids:
                 return "Get-WinEvent -FilterHashtable @{{LogName=\"{}\"; ID={}}} | where {{ ".format(self.logname, ','.join(self.eventids))
             elif self.logname:
                 return "Get-WinEvent -LogName %s | where { " % self.logname
-            return "Get-WinEvent | where { "
+            elif self.eventids:
+                return "$logs = Get-WinEvent -ListLog * | Where-Object {{$_.RecordCount}} | Select-Object -ExpandProperty LogName; Get-WinEvent -FilterHashtable @{{LogName=$logs; ID={}}} | where {{".format(','.join(self.eventids))
+            return "$logs = Get-WinEvent -ListLog * | Where-Object {{$_.RecordCount}} | Select-Object -ExpandProperty LogName; Get-WinEvent -FilterHashtable @{{LogName=$logs}} | where { "
         else:
             if self.logname and self.eventids:
                 return "Get-WinEvent -FilterHashtable @{{LogName=\"{}\"; ID={}}}".format(self.logname, ','.join(self.eventids))
             elif self.logname:
                 return "Get-WinEvent -LogName %s" % self.logname
-            return "Get-WinEvent"
+            elif self.eventids:
+                return "$logs = Get-WinEvent -ListLog * | Where-Object {{$_.RecordCount}} | Select-Object -ExpandProperty LogName; Get-WinEvent -FilterHashtable @{{LogName=$logs; ID={}}}".format(','.join(self.eventids))
+            return "$logs = Get-WinEvent -ListLog * | Where-Object {{$_.RecordCount}} | Select-Object -ExpandProperty LogName; Get-WinEvent -FilterHashtable @{{LogName=$logs}}"
 
     def generateAfter(self, parsed):
         if self.csv:
@@ -105,8 +117,9 @@ class PowerShellBackend(SingleTextQueryBackend):
         self.parsedlogsource = sigmaparser.get_logsource().service
 
         if parsed.parsedAgg:
-            powershellSuffixAgg = self.generateAggregation(parsed.parsedAgg)
-            result = result + " } " + powershellSuffixAgg
+            if result:
+                powershellSuffixAgg = self.generateAggregation(parsed.parsedAgg)
+                result = result + " } " + powershellSuffixAgg
         else:
             if result:
                 result += " } | select TimeCreated,Id,RecordId,ProcessId,MachineName,Message"
@@ -126,12 +139,12 @@ class PowerShellBackend(SingleTextQueryBackend):
                 # General handling here...
                 if type(value) == str and "*" in value:
                     value = normalize_value(value, keypresent=True)
-                    return "$_.message -match %s" % (self.generateValueNode(key + ".*" + value, True))
+                    return "$_.message -match %s" % (self.generateValueNode(add_wildcard(key) + ".*" + value, True))
                 elif type(value) in (str, int):
                     value = normalize_value(value, keypresent=True)
-                    return '$_.message -match %s' % (self.generateValueNode(key + ".*" + value, True))
+                    return '$_.message -match %s' % (self.generateValueNode(add_wildcard(key) + ".*" + value, True))
                 else:
-                    return self.mapExpression % (key, self.generateNode(value))
+                    return self.mapExpression % (add_wildcard(key), self.generateNode(value))
         elif type(value) == list:
             return self.generateMapItemListNode(key, value)
         else:
@@ -149,7 +162,7 @@ class PowerShellBackend(SingleTextQueryBackend):
                 # General list handling here...
                 if type(item) == 'str' and "*" in item:
                     item = normalize_value(item, keypresent=True)
-                    itemslist.append('$_.message -match %s' % (self.generateValueNode(key + ".*" + item, True)))
+                    itemslist.append('$_.message -match %s' % (self.generateValueNode(add_wildcard(key) + ".*" + item, True)))
                 else:
                     item = normalize_value(item)
                     itemslist.append('$_.message -match %s' % (self.generateValueNode(item, True)))
@@ -214,3 +227,8 @@ def normalize_value(value, keypresent=False):
     value = value.replace('"', '`"')
 
     return value
+
+
+def add_wildcard(key):
+    """Allow whitespace before all capital letters in the key (typically needed)"""
+    return re.sub(r"(\w)([A-Z])", r"\1\\s*\2", key)
