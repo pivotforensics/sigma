@@ -36,8 +36,8 @@ class PowerShellBackend(SingleTextQueryBackend):
     listExpression = "($_.message -match %s)"
     listSeparator = "$_.message -match "
     valueExpression = "\"%s\""
-    nullExpression = "-not %s=\"*\""
-    notNullExpression = "%s=\"*\""
+    nullExpression = "$_.message -notcontains \"%s\""
+    notNullExpression = "$_.message -contains \"%s\""
     mapExpression = "$_.%s -eq %s"
     mapListsSpecialHandling = True
 
@@ -59,6 +59,9 @@ class PowerShellBackend(SingleTextQueryBackend):
             else:
                 result += query
             result += self.generateAfter(parsed)
+
+            # Remove an always true clause (happens for lists of evdent ids since we replace them)
+            result = result.replace(' | where { (1) }', '')
 
             return result
 
@@ -166,7 +169,9 @@ class PowerShellBackend(SingleTextQueryBackend):
                 else:
                     item = normalize_value(item)
                     itemslist.append('$_.message -match %s' % (self.generateValueNode(item, True)))
-        return '('+" -or ".join(itemslist)+')'
+        if itemslist:
+            return '('+" -or ".join(itemslist)+')'
+        return '1' # true
 
     def generateANDNode(self, node):
         generated = [ self.generateNode(val) for val in node ]
