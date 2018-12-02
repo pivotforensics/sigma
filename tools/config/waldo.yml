@@ -1,0 +1,62 @@
+logsources:
+  windows-application:
+    product: windows
+    service: application
+    conditions:
+      logsource: 'Application'
+  windows-security:
+    product: windows
+    service: security
+    conditions:
+      logsource: 'Security'
+  windows-system:
+    product: windows
+    service: system
+    conditions:
+      logsource: 'System'
+  windows-sysmon:
+    product: windows
+    service: sysmon
+    conditions:
+        logsource: 'Microsoft-Windows-Sysmon/Operational'
+  windows-powershell:
+    product: windows
+    service: powershell
+    conditions:
+        logsource: 'Microsoft-Windows-PowerShell/Operational'
+  windows-classicpowershell:
+    product: windows
+    service: powershell-classic
+    conditions:
+      logsource: 'Windows PowerShell'
+  windows-taskscheduler:
+    product: windows
+    service: taskscheduler
+    conditions:
+      logsource: 'Microsoft-Windows-TaskScheduler/Operational'
+  windows-wmi:
+    product: windows
+    service: wmi
+    conditions:
+      logsource: 'Microsoft-Windows-WMI-Activity/Operational'
+  windows-dns-server:
+    product: windows
+    service: dns-server
+    category: dns
+    conditions:
+      logsource: 'DNS Server'
+  windows-dns-server-audit:
+    product: windows
+    service: dns-server-audit
+    conditions:
+      logsource: 'Microsoft-Windows-DNS-Server/Audit'
+  windows-driver-framework:
+    product: windows
+    service: driver-framework
+    conditions:
+      logsource: 'Microsoft-Windows-DriverFrameworks-UserMode/Operational'
+  windows-ntlm:
+    product: windows
+    service: ntlm
+    conditions:
+      logsource: 'Microsoft-Windows-NTLM/Operational'
