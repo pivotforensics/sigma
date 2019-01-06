@@ -22,12 +22,53 @@ from .base import BaseBackend, SingleTextQueryBackend
 from .mixins import RulenameCommentMixin, MultiRuleOutputMixin
 from .exceptions import NotSupportedError
 
-class ElasticsearchQuerystringBackend(SingleTextQueryBackend):
+class ElasticsearchWildcardHandlingMixin(object):
+    """
+    Determine field mapping to keyword subfields depending on existence of wildcards in search values. Further,
+    provide configurability with backend parameters.
+    """
+    options = SingleTextQueryBackend.options + (
+            ("keyword_field", "keyword", "Keyword sub-field name", None),
+            ("keyword_blacklist", None, "Fields that don't have a keyword subfield", None)
+            )
+    reContainsWildcard = re.compile("(?<!\\\\)[*?]").search
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.matchKeyword = True
+        try:
+            self.blacklist = self.keyword_blacklist.split(",")
+        except AttributeError:
+            self.blacklist = list()
+
+    def containsWildcard(self, value):
+        """Determine if value contains wildcard."""
+        if type(value) == str:
+            return self.reContainsWildcard(value)
+        else:
+            return False
+
+    def fieldNameMapping(self, fieldname, value):
+        """
+        Determine if values contain wildcards. If yes, match on keyword field else on analyzed one.
+        Decide if field value should be quoted based on the field name decision and store it in object property.
+        """
+        if fieldname not in self.blacklist and (
+                type(value) == list and any(map(self.containsWildcard, value)) \
+                or self.containsWildcard(value)
+                ):
+            self.matchKeyword = True
+            return fieldname + "." + self.keyword_field
+        else:
+            self.matchKeyword = False
+            return fieldname
+
+class ElasticsearchQuerystringBackend(ElasticsearchWildcardHandlingMixin, SingleTextQueryBackend):
     """Converts Sigma rule into Elasticsearch query string. Only searches, no aggregations."""
     identifier = "es-qs"
     active = True
 
-    reEscape = re.compile("([+\\-=!(){}\\[\\]^\"~:/]|\\\\(?![*?])|\\\\u|&&|\\|\\|)")
+    reEscape = re.compile("([\s+\\-=!(){}\\[\\]^\"~:/]|\\\\(?![*?])|\\\\u|&&|\\|\\|)")
     reClear = re.compile("[<>]")
     andToken = " AND "
     orToken = " OR "
@@ -35,7 +76,7 @@ class ElasticsearchQuerystringBackend(SingleTextQueryBackend):
     subExpression = "(%s)"
     listExpression = "(%s)"
     listSeparator = " "
-    valueExpression = "\"%s\""
+    valueExpression = "%s"
     nullExpression = "NOT _exists_:%s"
     notNullExpression = "_exists_:%s"
     mapExpression = "%s:%s"
@@ -46,13 +87,16 @@ class ElasticsearchQuerystringBackend(SingleTextQueryBackend):
         if result == "" or result.isspace():
             return '""'
         else:
-            return result
+            if self.matchKeyword:   # don't quote search value on keyword field
+                return result
+            else:
+                return "\"%s\"" % result
 
-class ElasticsearchDSLBackend(RulenameCommentMixin, BaseBackend):
+class ElasticsearchDSLBackend(RulenameCommentMixin, ElasticsearchWildcardHandlingMixin, BaseBackend):
     """ElasticSearch DSL backend"""
     identifier = 'es-dsl'
     active = True
-    options = (
+    options = RulenameCommentMixin.options + ElasticsearchWildcardHandlingMixin.options + (
         ("es", "http://localhost:9200", "Host and port of Elasticsearch instance", None),
         ("output", "import", "Output format: import = JSON search request, curl = Shell script that do the search queries via curl", "output_type"),
     )
@@ -119,10 +163,21 @@ class ElasticsearchDSLBackend(RulenameCommentMixin, BaseBackend):
         if type(value) is list:
             res = {'bool': {'should': []}}
             for v in value:
-                res['bool']['should'].append({'match_phrase': {key: v}})
+                key_mapped = self.fieldNameMapping(key, v)
+                if self.matchKeyword:   # searches against keyowrd fields are wildcard searches, phrases otherwise
+                    queryType = 'wildcard'
+                else:
+                    queryType = 'match_phrase'
+
+                res['bool']['should'].append({queryType: {key_mapped: v}})
             return res
         else:
-            return {'match_phrase': {key: value}}
+            key_mapped = self.fieldNameMapping(key, value)
+            if self.matchKeyword:   # searches against keyowrd fields are wildcard searches, phrases otherwise
+                queryType = 'wildcard'
+            else:
+                queryType = 'match_phrase'
+            return {queryType: {key_mapped: value}}
 
     def generateValueNode(self, node):
         return {'multi_match': {'query': node, 'fields': [], 'type': 'phrase'}}
@@ -161,7 +216,6 @@ class ElasticsearchDSLBackend(RulenameCommentMixin, BaseBackend):
                         break
                 raise NotImplementedError("%s : The '%s' aggregation operator is not yet implemented for this backend"%(self.title, funcname))
 
-
     def generateBefore(self, parsed):
         self.queries.append({'query': {'constant_score': {'filter': {}}}})
 
@@ -199,7 +253,7 @@ class KibanaBackend(ElasticsearchQuerystringBackend, MultiRuleOutputMixin):
     """Converts Sigma rule into Kibana JSON Configuration files (searches only)."""
     identifier = "kibana"
     active = True
-    options = (
+    options = ElasticsearchQuerystringBackend.options + (
             ("output", "import", "Output format: import = JSON file manually imported in Kibana, curl = Shell script that imports queries in Kibana via curl (jq is additionally required)", "output_type"),
             ("es", "localhost:9200", "Host and port of Elasticsearch instance", None),
             ("index", ".kibana", "Kibana index", None),
@@ -313,7 +367,7 @@ class XPackWatcherBackend(ElasticsearchQuerystringBackend, MultiRuleOutputMixin)
     """Converts Sigma Rule into X-Pack Watcher JSON for alerting"""
     identifier = "xpack-watcher"
     active = True
-    options = (
+    options = ElasticsearchQuerystringBackend.options + (
             ("output", "curl", "Output format: curl = Shell script that imports queries in Watcher index with curl", "output_type"),
             ("es", "localhost:9200", "Host and port of Elasticsearch instance", None),
             ("mail", None, "Mail address for Watcher notification (only logging if not set)", None),
@@ -503,7 +557,7 @@ class ElastalertBackend(MultiRuleOutputMixin, ElasticsearchQuerystringBackend):
     """Elastalert backend"""
     identifier = 'elastalert'
     active = True
-    options = (
+    options = ElasticsearchQuerystringBackend.options + (
         ("emails", None, "Email addresses for Elastalert notification, if you want to alert several email addresses put them coma separated", None),
         ("smtp_host", None, "SMTP server address", None),
         ("from_addr", None, "Email sender address", None),
@@ -551,7 +605,8 @@ class ElastalertBackend(MultiRuleOutputMixin, ElasticsearchQuerystringBackend):
             #Handle aggregation
             if parsed.parsedAgg:
                 if parsed.parsedAgg.aggfunc == sigma.parser.condition.SigmaAggregationParser.AGGFUNC_COUNT or parsed.parsedAgg.aggfunc == sigma.parser.condition.SigmaAggregationParser.AGGFUNC_MIN or parsed.parsedAgg.aggfunc == sigma.parser.condition.SigmaAggregationParser.AGGFUNC_MAX or parsed.parsedAgg.aggfunc == sigma.parser.condition.SigmaAggregationParser.AGGFUNC_AVG or parsed.parsedAgg.aggfunc == sigma.parser.condition.SigmaAggregationParser.AGGFUNC_SUM:
-                    rule_object['query_key'] = parsed.parsedAgg.groupfield
+                    if parsed.parsedAgg.groupfield is not None:
+                        rule_object['query_key'] = parsed.parsedAgg.groupfield + ".keyword"
                     rule_object['type'] = "metric_aggregation"
                     rule_object['buffer_time'] = interval
                     rule_object['doc_type'] = "doc"
@@ -562,7 +617,7 @@ class ElastalertBackend(MultiRuleOutputMixin, ElasticsearchQuerystringBackend):
                         rule_object['metric_agg_type'] = parsed.parsedAgg.aggfunc_notrans
 
                     if parsed.parsedAgg.aggfield:
-                        rule_object['metric_agg_key'] = parsed.parsedAgg.aggfield
+                        rule_object['metric_agg_key'] = parsed.parsedAgg.aggfield + ".keyword"
                     else:
                         rule_object['metric_agg_key'] = "_id"
 
