@@ -15,7 +15,7 @@ references:
     - https://gist.github.com/subTee/7937a8ef07409715f15b84781e180c46#file-rat-bat
     - https://twitter.com/vector_sec/status/896049052642533376
 author: Florian Roth
-modified: 2012/12/11
+modified: 2018/12/11
 detection:
     condition: selection
 falsepositives: 
@@ -33,8 +33,8 @@ detection:
             - 'vssadmin.exe delete shadows*'
             - 'vssadmin delete shadows*'
             - 'vssadmin create shadow /for=C:*'
-            - 'copy \\?\GLOBALROOT\Device\*\windows\ntds\ntds.dit*'
-            - 'copy \\?\GLOBALROOT\Device\*\config\SAM*'
+            - 'copy \\?\GLOBALROOT\Device\\*\windows\ntds\ntds.dit*'
+            - 'copy \\?\GLOBALROOT\Device\\*\config\SAM*'
             - 'reg SAVE HKLM\SYSTEM *'
             - '* sekurlsa:*'
             - 'net localgroup adminstrators * /add'
@@ -42,12 +42,12 @@ detection:
             - 'certutil.exe *-urlcache* http*'
             - 'certutil.exe *-urlcache* ftp*'
             # Malware
-            - 'netsh advfirewall firewall *\AppData\*'
-            - 'attrib +S +H +R *\AppData\*'
-            - 'schtasks* /create *\AppData\*'
+            - 'netsh advfirewall firewall *\AppData\\*'
+            - 'attrib +S +H +R *\AppData\\*'
+            - 'schtasks* /create *\AppData\\*'
             - 'schtasks* /sc minute*'
-            - '*\Regasm.exe *\AppData\*'
-            - '*\Regasm *\AppData\*'
+            - '*\Regasm.exe *\AppData\\*'
+            - '*\Regasm *\AppData\\*'
             - '*\bitsadmin* /transfer*'
             - '*\certutil.exe * -decode *'
             - '*\certutil.exe * -decodehex *'
@@ -90,8 +90,8 @@ detection:
             - 'vssadmin.exe delete shadows*'
             - 'vssadmin delete shadows*'
             - 'vssadmin create shadow /for=C:*'
-            - 'copy \\?\GLOBALROOT\Device\*\windows\ntds\ntds.dit*'
-            - 'copy \\?\GLOBALROOT\Device\*\config\SAM*'
+            - 'copy \\?\GLOBALROOT\Device\\*\windows\ntds\ntds.dit*'
+            - 'copy \\?\GLOBALROOT\Device\\*\config\SAM*'
             - 'reg SAVE HKLM\SYSTEM *'
             - '* sekurlsa:*'
             - 'net localgroup adminstrators * /add'
@@ -99,12 +99,12 @@ detection:
             - 'certutil.exe *-urlcache* http*'
             - 'certutil.exe *-urlcache* ftp*'
             # Malware
-            - 'netsh advfirewall firewall *\AppData\*'
-            - 'attrib +S +H +R *\AppData\*'
-            - 'schtasks* /create *\AppData\*'
+            - 'netsh advfirewall firewall *\AppData\\*'
+            - 'attrib +S +H +R *\AppData\\*'
+            - 'schtasks* /create *\AppData\\*'
             - 'schtasks* /sc minute*'
-            - '*\Regasm.exe *\AppData\*'
-            - '*\Regasm *\AppData\*'
+            - '*\Regasm.exe *\AppData\\*'
+            - '*\Regasm *\AppData\\*'
             - '*\bitsadmin* /transfer*'
             - '*\certutil.exe * -decode *'
             - '*\certutil.exe * -decodehex *'
