@@ -16,7 +16,7 @@ detection:
         EventID: 400
         EngineVersion: '2.*'
     filter:
-        HostVersion: '2.*' 
+        HostVersion: '2.*'
     condition: selection and not filter
 falsepositives:
     - Penetration Test

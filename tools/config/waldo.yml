@@ -1,62 +1,19 @@
 logsources:
-  windows-application:
-    product: windows
-    service: application
-    conditions:
-      logsource: 'Application'
-  windows-security:
-    product: windows
-    service: security
-    conditions:
-      logsource: 'Security'
-  windows-system:
-    product: windows
-    service: system
-    conditions:
-      logsource: 'System'
-  windows-sysmon:
-    product: windows
-    service: sysmon
-    conditions:
-        logsource: 'Microsoft-Windows-Sysmon/Operational'
-  windows-powershell:
-    product: windows
-    service: powershell
-    conditions:
-        logsource: 'Microsoft-Windows-PowerShell/Operational'
-  windows-classicpowershell:
-    product: windows
-    service: powershell-classic
-    conditions:
-      logsource: 'Windows PowerShell'
-  windows-taskscheduler:
-    product: windows
-    service: taskscheduler
-    conditions:
-      logsource: 'Microsoft-Windows-TaskScheduler/Operational'
-  windows-wmi:
-    product: windows
-    service: wmi
-    conditions:
-      logsource: 'Microsoft-Windows-WMI-Activity/Operational'
-  windows-dns-server:
-    product: windows
-    service: dns-server
-    category: dns
-    conditions:
-      logsource: 'DNS Server'
-  windows-dns-server-audit:
-    product: windows
-    service: dns-server-audit
-    conditions:
-      logsource: 'Microsoft-Windows-DNS-Server/Audit'
-  windows-driver-framework:
-    product: windows
-    service: driver-framework
-    conditions:
-      logsource: 'Microsoft-Windows-DriverFrameworks-UserMode/Operational'
-  windows-ntlm:
-    product: windows
-    service: ntlm
-    conditions:
-      logsource: 'Microsoft-Windows-NTLM/Operational'
+  apache:
+    category: webserver
+    sources:
+      - 'File:/var/log/apache/*.log'
+      - 'File:/var/log/apache2/*.log'
+      - 'File:/var/log/httpd/*.log'
+  linux-auth:
+    product: linux
+    service: auth
+    sources:
+      - 'File:/var/log/auth.log'
+      - 'File:/var/log/auth.log.?' # auth.log.1, auth.log.2, ...
+  linux-syslog:
+    product: linux
+    service: syslog
+    sources:
+      - 'File:/var/log/syslog'
+      - 'File:/var/log/syslog.?' # syslog.1, syslog.2 ...
