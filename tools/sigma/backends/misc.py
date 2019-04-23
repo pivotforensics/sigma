@@ -22,6 +22,7 @@ class GrepBackend(BaseBackend, QuoteCharMixin):
     """Generates Perl compatible regular expressions and puts 'grep -P' around it"""
     identifier = "grep"
     active = True
+    config_required = False
 
     reEscape = re.compile("([\\|()\[\]{}.^$+])")
 
@@ -30,6 +31,7 @@ class GrepBackend(BaseBackend, QuoteCharMixin):
 
     def cleanValue(self, val):
         val = super().cleanValue(val)
+        val = val.replace("'","'\"'\"'")
         return re.sub("\\*", ".*", val)
 
     def generateORNode(self, node):
