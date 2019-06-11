@@ -1,3 +1,6 @@
+title: QRadar
+backends:
+  - qradar
 order: 20
 logsources:
   apache:

@@ -150,6 +150,8 @@ class PowerShellBackend(SingleTextQueryBackend):
                     return self.mapExpression % (add_wildcard(key), self.generateNode(value))
         elif type(value) == list:
             return self.generateMapItemListNode(key, value)
+        elif value is None:
+            return self.nullExpression % (key, )
         else:
             raise TypeError("Backend does not support map values of type " + str(type(value)))
 
