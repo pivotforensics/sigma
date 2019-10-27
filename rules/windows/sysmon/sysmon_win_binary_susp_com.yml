@@ -15,9 +15,11 @@ logsource:
 detection:
     selection:
         EventID: 3
+        Initiated: 'true'
         DestinationHostname: 
             - '*dl.dropboxusercontent.com'
             - '*.pastebin.com'
+            - '*.githubusercontent.com' # includes both gists and github repositories
         Image: 'C:\Windows\\*'
     condition: selection
 falsepositives:

@@ -14,8 +14,9 @@ detection:
         ParentImage: '*\taskmgr.exe'
     filter:
         Image:
-            - resmon.exe
-            - mmc.exe
+            - '*\resmon.exe'
+            - '*\mmc.exe'
+            - '*\taskmgr.exe'
     condition: selection and not filter
 fields:
     - Image

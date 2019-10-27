@@ -188,6 +188,7 @@ tools/sigmac -t splunk -c ~/my-splunk-mapping.yml -c tools/config/generic/window
 * [Logpoint](https://www.logpoint.com)
 * [Windows Defender Advanced Threat Protection (WDATP)](https://www.microsoft.com/en-us/windowsforbusiness/windows-atp)
 * [Azure Sentinel / Azure Log Analytics](https://azure.microsoft.com/en-us/services/azure-sentinel/)
+* [Sumologic](https://www.sumologic.com/)
 * [ArcSight](https://software.microfocus.com/en-us/products/siem-security-information-event-management/overview)
 * [QRadar](https://www.ibm.com/de-de/marketplace/ibm-qradar-siem)
 * [Qualys](https://www.qualys.com/apps/threat-protection/)
@@ -270,12 +271,37 @@ These tools are not part of the main toolchain and maintained separately by thei
 # Projects or Products that use Sigma
 
 * [MISP](http://www.misp-project.org/2017/03/26/MISP.2.4.70.released.html) (since version 2.4.70, March 2017)
-* [TA-Sigma-Searches](https://github.com/dstaulcu/TA-Sigma-Searches) (Splunk App)
 * [SOC Prime - Sigma Rule Editor](https://tdm.socprime.com/sigma/)
-* [ypsilon](https://github.com/P4T12ICK/ypsilon) - Automated Use Case Testing 
 * [uncoder.io](https://uncoder.io/) - Online Translator for SIEM Searches
-* [SPARK](https://www.nextron-systems.com/2018/06/28/spark-applies-sigma-rules-in-eventlog-scan/) - Scan with Sigma rules on endpoints
+* [THOR](https://www.nextron-systems.com/2018/06/28/spark-applies-sigma-rules-in-eventlog-scan/) - Scan with Sigma rules on endpoints
+* [Joe Sandbox](https://www.joesecurity.org/)
+* [ypsilon](https://github.com/P4T12ICK/ypsilon) - Automated Use Case Testing 
 * [RANK VASA](https://globenewswire.com/news-release/2019/03/04/1745907/0/en/RANK-Software-to-Help-MSSPs-Scale-Cybersecurity-Offerings.html)
+* [TA-Sigma-Searches](https://github.com/dstaulcu/TA-Sigma-Searches) (Splunk App)
+
+# Contribution
+
+If you want to contribute, you are more then welcome. There are numerous ways to help this project.
+
+## Use it and provide feedback
+
+If you use it, let us know what works and what does not work. 
+
+E.g.
+- Tell us about false positives (issues section) 
+- Try to provide an improved rule (new filter) via [pull request](https://help.github.com/en/articles/editing-files-in-another-users-repository) on that rule
+
+## Work on open issues
+
+The github issue tracker is a good place to start tackling some issues others raised to the project. It could be as easy as a review of the documentation.
+
+## Provide Backends / Backend Features / Bugfixes
+
+Various requests for sigmac (sigma converter) backends exist. Some backends are very limited and need features. We are working on a documentation on how to write new backends but our time for this project is currently mostly spent for issue resolutions. 
+
+## Spread the word
+
+Last but not least, the more people use Sigma, the better, so help promote it by sharing it via social media. If you are using it, consider giving a talk about your journey and tell us about it.
 
 # Licenses
 

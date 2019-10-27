@@ -1,0 +1,14 @@
+title: Virutoso index and field mapping
+order: 20
+backends:
+  - splunk
+  - splunkxml
+logsources:
+  windows:
+    product: windows
+    index: virtuoso*
+fieldmappings:
+    EventID: extra.plaso.event_identifier
+    ComputerName: extra.plaso.computer_name
+    EventLevel: extra.plaso.event_level
+    
