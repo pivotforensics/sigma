@@ -18,4 +18,6 @@ level: high
 falsepositives:
     - Valid change in the GuardDuty (e.g. to ignore internal scanners)
 tags:
-    - attack.t1089
+    - attack.defense_evasion
+    - attack.t1562.001
+    - attack.t1089  # an old one

@@ -9,7 +9,8 @@ references:
     - self experience
 tags:
     - attack.defense_evasion
-    - attack.t1054
+    - attack.t1054    # an old one
+    - attack.t1562.006
 author: Mikhail Larin, oscd.community
 status: experimental
 date: 2019/10/25
